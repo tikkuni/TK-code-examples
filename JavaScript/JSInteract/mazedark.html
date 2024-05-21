@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <title>ClipTest</title>
+        <meta name="Maze: " content="Maze gen light">
+        <meta name="author" content="Tkay">
+
+		<script>
+
+		window.addEventListener("load", init);
+		var mazeCanvas = undefined
+		var mazeCtx = undefined
+		var lightCanvas = undefined
+		var lightCtx = undefined
+
+		var grid = [
+		  [1, 1,1,1,1,1, 1],
+		  [1, 0,0,0,0,0, 1],
+		  [1, 0,0,0,0,0, 1],
+		  [1, 0,0,0,0,0, 1],
+		  [1, 0,0,0,0,0, 1],
+		  [1, 0,0,0,0,0, 1],
+		  [1, 1,1,1,1,1, 1]
+		];
+		var tileSizeX = 60
+		var width = 11
+		var height = 11
+
+		var gridSegments = []; // array of ALL lines;
+
+		function init(){
+			mazeCanvas = document.getElementById('mazecanvas');
+			mazeCtx = mazeCanvas.getContext('2d');
+			lightCanvas = document.getElementById('lightcanvas');
+			lightCtx = lightCanvas.getContext('2d');
+			mazeCtx.canvas.width  = window.innerWidth;
+			mazeCtx.canvas.height = window.innerHeight;
+			lightCtx.canvas.width  = window.innerWidth;
+			lightCtx.canvas.height = window.innerHeight;
+			genGrid(width, height)  //instant
+			//drawGridSlowAndShow(width, height)
+			initSegmentsAndTrim() // called once
+			drawGridSimple()
+		}
+
+		function initSegments(){
+			var pastCorners = []
+			for(var gridX = 0; gridX < grid.length; gridX++) {
+				for(var gridY = 0; gridY < grid[gridX].length; gridY++) { // every cell
+					if(grid[gridY][gridX] == 0) continue
+
+					var ourCorners = fourCorners(gridX, gridY) // we need to have only unique corners in our segment array
+
+					for(var i = 0; i < ourCorners.length; i++){
+						for(var x = 0; x < pastCorners.length; x++){
+							if(ourCorners[i][0] === pastCorners[x][0] || ourCorners[i][1] === pastCorners[x][1])
+								ourCorners[i] = undefined;
+
+						}
+					}
+
+					var ourSegments = fourCornersToLineSegmentArray(ourCorners) // [topLine, rightLine, bottomLine, leftLine]
+
+					gridSegments.push(...ourSegments) // adds the 4 lines to the gridSegments Array
+				}
+			}
+		}
+
+		function initSegmentsAndTrim(){
+			var pastCorners = []
+			var verticalSegments = []; // start left to right
+			var horizontalSegments = []; // start top to bottom 
+			for(var gridX = 0; gridX < grid.length; gridX++) {
+				for(var gridY = 0; gridY < grid[gridX].length; gridY++) { // every cell
+					if(grid[gridY][gridX].wallType == 0) continue
+					//debugger;
+					var ourCorners = fourCorners(gridX, gridY) // we need to have only unique corners in our segment array
+
+					if(gridY != 0){
+						var previousGridY = gridY - 1;
+						if(grid[gridX][previousGridY].wallType == 1){
+						//increase segment length
+						//assign that segment index to ours in that direction
+						}
+				    }		
+
+					var ourSegments = fourCornersToLineSegmentArray(ourCorners) // [topLine, rightLine, bottomLine, leftLine]
+
+					gridSegments.push(...ourSegments) // adds the non-undefined segments to the gridSegments Array
+				}
+			}
+		}
+
+		function initGrid(width, height){
+			grid = [];
+			for(var row = 0; row < height; row++) {
+				grid.push([])
+				for(var col = 0; col < width; col++) {
+					grid[row].push({
+            wallType: 1, // 1 is wall, 0 is empty
+            segmentIndexes: [undefined, undefined, undefined, undefined] // [topLine, rightLine, bottomLine, leftLine]
+                                                                         //   many cells can share an index
+          }) //push a wall
+				}
+			}
+
+		}
+
+		function drawGridSlowAndShow(width, height){
+			var tempStack = [{
+					coords: [1,1],
+					visited: true
+			}];
+			initGrid(width, height)
+			function timeout() {
+				setTimeout(function () {
+					if(tempStack.length > 0){
+						// 1. Pop a cell from the stack and make it a current cell
+						currentCell = tempStack.pop();
+						// 2. If the current cell has any neighbours which have not been visited
+
+						var path = findUnvisitedNeighborPath(currentCell)
+						if(path){
+							// 1. Push the current cell to the stack
+							tempStack.push(currentCell)
+							// 2. Choose one of the unvisited neighbours. findUnvisitedNeighborPath already does this
+							// 3. Remove the wall between the current cell and the chosen cell
+							carveThroughWall(path[0], path[1], path[2])
+
+							//4. Mark the chosen cell as visited and push it to the stack
+							tempStack.push({
+								coords: [path[2][0], path[2][1]],
+								visited: true
+							})
+
+						}
+						drawGridSimple()
+						timeout();
+					}
+
+				}, 100);
+			}
+			timeout();
+
+		}
+
+		function genGrid(width, height){
+			var tempStack = [{
+				coords: [1,1],
+				visited: true
+			}];
+			initGrid(width, height)
+
+			while(tempStack.length > 0){
+				// 1. Pop a cell from the stack and make it a current cell
+				currentCell = tempStack.pop();
+				// 2. If the current cell has any neighbours which have not been visited
+
+				var path = findUnvisitedNeighborPath(currentCell)
+				if(path){
+					// 1. Push the current cell to the stack
+					tempStack.push(currentCell)
+					// 2. Choose one of the unvisited neighbours. findUnvisitedNeighborPath already does this
+					// 3. Remove the wall between the current cell and the chosen cell
+					carveThroughWall(path[0], path[1], path[2])
+
+					//4. Mark the chosen cell as visited and push it to the stack
+					tempStack.push({
+						coords: [path[2][0], path[2][1]],
+						visited: true
+					})
+
+				}
+			}
+		}
+
+		function isOutsideWallCell(cell){
+			if(cell[1] + 1 == width)  return true
+			if(cell[0] == 0) 	      return true
+			if(cell[0] + 1 == height) return true
+			if(cell[1] == 0) 	      return true
+
+			return false
+		}
+
+		function outsideBounds(cell){ //returns true if outside bounds
+			if(cell[1] >= width)    return true
+			if(cell[0] < 0) 	    return true
+			if(cell[0] >= height)   return true
+			if(cell[1] < 0) 	    return true
+
+			return false
+		}
+
+		function isWall(cell){
+
+			return grid[cell[0]][cell[1]].wallType == 1
+		}
+
+		function findUnvisitedNeighborPath(currentCell){
+			var directions = [
+				[0, -1], // north
+				[1, 0],  // east
+				[0, 1],  // south
+				[-1, 0]  // weast
+			]
+
+			while(directions.length > 0){
+				var curIndex = Math.floor(Math.random() * directions.length) // random index
+				var curDirection = directions[curIndex]
+				directions.splice(curIndex, 1) //remove from array
+
+				var tempPath = getPath(currentCell.coords, curDirection)
+				if( tempPath ){
+					return tempPath
+				}
+			}
+			//if we get here we tried every direction and didnt find a path
+			return false;
+		}
+
+		function getPath(currentCell, direction){ // direction: [0,1] or [-1,0] or [0, -1]
+			var wallCell = [currentCell[0] + direction[0], currentCell[1] + direction[1]]
+			if( !outsideBounds(wallCell) && isWall(wallCell) ){
+				var neighborCell = [wallCell[0] + direction[0], wallCell[1] + direction[1]]
+				if( !outsideBounds(neighborCell) && !isOutsideWallCell(neighborCell) && isWall(neighborCell) ){
+					return [currentCell, wallCell, neighborCell];
+					//carveThroughWall(currentCell, wallCell, neighborCell)
+				}
+			}
+			return false
+		}
+
+		function carveThroughWall(startCell, wallCell, neighborCell){  // example: [0,0], [0,1], [0,2]
+			grid[startCell[0]][startCell[1]].wallType = 0;
+			grid[wallCell[0]][wallCell[1]].wallType = 0;
+			grid[neighborCell[0]][neighborCell[1]].wallType = 0;
+		}
+
+		function drawGridSimple(){
+			mazeCtx.clearRect(0, 0, mazeCanvas.width, mazeCanvas.height);
+			//
+			mazeCtx.beginPath();
+			mazeCtx.rect(0, 0, mazeCanvas.width, mazeCanvas.height);
+			mazeCtx.fillStyle = "black";
+			mazeCtx.fill();
+			//
+			for(var row = 0; row < grid.length; row++) {
+				for(var col = 0; col < grid[row].length; col++) {
+					if(grid[row][col].wallType == 1)
+						drawRectangle(row, col)
+				}
+			}
+
+		}
+
+		function drawRectangle(r, c) {
+			mazeCtx.fillStyle = '#ff8080'
+			mazeCtx.fillRect( c * tileSizeX, r * tileSizeX, tileSizeX, tileSizeX)
+		}
+
+		window.addEventListener('mousemove', handleMove);
+		window.addEventListener("touchmove", handleMove, false);
+
+		function handleMove(e){
+			e.preventDefault();
+			var mouseX = e.clientX - mazeCanvas.offsetLeft
+			var mouseY = e.clientY - mazeCanvas.offsetTop
+			var touches = e.changedTouches;
+			if(touches){
+				mouseX = touches[0].clientX - mazeCanvas.offsetLeft
+			    mouseY = touches[0].clientY - mazeCanvas.offsetTop
+			}
+			//console.log(mouseX, mouseY, e.changedTouches)
+			lightCtx.fillStyle = "white";
+			window.requestAnimationFrame(function() {
+				drawRays(mouseX, mouseY)
+				//drawSingleRay(mouseX, mouseY)
+			});
+		}
+
+		function drawSingleRay(mouseX, mouseY){
+			lightCtx.clearRect(0, 0, lightCanvas.width, lightCanvas.height);
+			var centerPoint = [tileSizeX*width/2, tileSizeX*height/2]
+			var mouseRay = mouseAndCornerToParametric(centerPoint[0], centerPoint[1],mouseX, mouseY)
+			var mouseRay1 = { ...mouseRay}
+			var mouseRay2 = { ...mouseRay}
+			var minimum = 1
+
+			adjustAngleOfRay(mouseRay1, minimum)
+			adjustAngleOfRay(mouseRay2, -1* minimum)
+			//console.log(mouseRay, mouseRay1)
+
+			lightCtx.strokeStyle = "#404142";
+			drawRay(mouseRay)
+			lightCtx.strokeStyle = "#f700b1";
+			drawRay(mouseRay1)
+			lightCtx.strokeStyle = "#00f756";
+			drawRay(mouseRay2)
+
+		}
+
+		function adjustAngleOfRay(ray, offset){
+			if(ray.dx >= 0 && ray.dy >= 0){
+				ray.dx += offset;
+				ray.dy -= offset;
+			}
+			if(ray.dx < 0 && ray.dy > 0){
+				ray.dx += offset;
+				ray.dy += offset;
+			}
+			if(ray.dx > 0 && ray.dy < 0){
+				ray.dx -= offset;
+				ray.dy -= offset;
+			}
+			if(ray.dx <= 0 && ray.dy <= 0){
+				ray.dx -= offset;
+				ray.dy += offset;
+			}
+		}
+
+		function drawRay(mouseRay){
+			var closestIntersection = undefined;
+			for(var n = 0; n < gridSegments.length; n++) {
+				var directLineIntersection = intersectionCoords(mouseRay, gridSegments[n])
+				if(directLineIntersection) {
+					if(closestIntersection){
+						if(closestIntersection[0] > directLineIntersection[0]) //comparing T1
+							closestIntersection = directLineIntersection;
+					} else
+						closestIntersection = directLineIntersection;
+				}
+			}
+			if(closestIntersection){
+				lightCtx.beginPath();
+				lightCtx.moveTo(mouseRay.px, mouseRay.py);
+				lightCtx.lineTo(closestIntersection[1], closestIntersection[2]);
+				lightCtx.stroke();
+			}
+		}
+
+		var lastMouseX = undefined
+		var lastMouseY = undefined
+		function drawRays(mouseX, mouseY){
+			lightCtx.clearRect(0, 0, lightCanvas.width, lightCanvas.height);
+			lastMouseX = mouseX
+			lastMouseY = mouseY
+			//lightCtx.beginPath();
+			//lightCtx.moveTo(mouseX, mouseY);
+			var intersections = []
+			var intersectionsCycle = [
+				0, 0.1, -0.1
+			];
+			for(var i = 0; i < gridSegments.length; i++) { // draw a mouseRay to every segment
+				var mouseRay = mouseAndCornerToParametric(mouseX, mouseY, gridSegments[i].px, gridSegments[i].py)
+				var mouseRay1 = { ...mouseRay}
+				var mouseRay2 = { ...mouseRay}
+				var offset = 1
+				adjustAngleOfRay(mouseRay1, offset)
+				adjustAngleOfRay(mouseRay2, -1* offset)
+
+				var closestIntersection = [undefined, undefined, undefined]; // for mouseRay, mouseRay1, mouseRay2
+
+				for(var n = 0; n < gridSegments.length; n++) {
+				// and check it against every other segment to see if that ray also passes through them. then compare T1 values for closest
+					var intersectionTests = [
+						intersectionCoords(mouseRay, gridSegments[n]),
+						intersectionCoords(mouseRay1, gridSegments[n]),
+						intersectionCoords(mouseRay2, gridSegments[n])
+					]
+					var validIntersections = 0;
+					for(var m = intersectionTests.length; m >= 0;  m--){
+						var directLineIntersection = intersectionTests[m]
+						//if(m == 0)
+						//	console.log(directLineIntersection.dx, directLineIntersection.dy)
+						//if(m == 0 && validIntersections == 1) continue;
+
+						if(directLineIntersection) {
+							if(closestIntersection[m]){
+								if(closestIntersection[m][0] > directLineIntersection[0]) //comparing T1
+									closestIntersection[m] = directLineIntersection;
+							} else
+								closestIntersection[m] = directLineIntersection;
+							validIntersections++;
+						}
+					}
+
+
+
+				}
+				for(var k = 0; k < closestIntersection.length; k++){
+					if(closestIntersection[k]){
+						intersections.push([closestIntersection[k][1], closestIntersection[k][2]])
+						//lightCtx.lineTo(mouseX, mouseY);
+						//lightCtx.lineTo(closestIntersection[1], closestIntersection[2]);
+					}
+				}
+			}
+			intersections.sort(compareIntersections);
+			lightCtx.beginPath();
+			lightCtx.moveTo(mouseX, mouseY);
+			for(i = 0; i < intersections.length; i++){
+				lightCtx.lineTo(intersections[i][0], intersections[i][1]);
+				lightCtx.lineTo(mouseX, mouseY);
+			    lightCtx.lineTo(intersections[i][0], intersections[i][1]);
+			}
+			lightCtx.lineTo(intersections[0][0], intersections[0][1]);
+			lightCtx.strokeStyle = "#FF0000";
+			lightCtx.fill();
+		}
+
+		function angleBtw2Points(pointA, pointB){
+			changeInX = pointB[0] - pointA[0]
+			changeInY = pointB[1] - pointA[1]
+			return Math.degrees(Math.atan2(changeInY, changeInX))
+		}
+
+		Math.degrees = function(radians) {
+			return radians * 180 / Math.PI;
+		}
+
+		function compareIntersections(a, b) {
+			aDegrees = angleBtw2Points(a, [lastMouseX, lastMouseY])
+			bDegrees = angleBtw2Points(b, [lastMouseX, lastMouseY])
+			if (aDegrees > bDegrees) return 1;
+			if (bDegrees > aDegrees) return -1;
+
+			return 0;
+		}
+
+		function mouseAndCornerToParametric(mouseX, mouseY, cornerX, cornerY){ // just points. makes it a ray
+			var run = cornerX - mouseX
+			var rise = cornerY - mouseY
+			var mouseRayDistance = 1;
+
+			var mouseRay = {
+				px: mouseX,
+				py: mouseY,
+				dx: run   * mouseRayDistance,
+				dy: rise  * mouseRayDistance
+			}
+
+			return mouseRay;
+		}
+
+		function fourCornersToLineSegmentArray(ourCorners){
+			// [NEcorner, SEcorner, SWcorner, NWcorner]
+			var arr = []
+			if(ourCorners[0]){
+				var topLine = {
+					px: ourCorners[0][0], //NEcorner x
+					py: ourCorners[0][1], //NEcorner y
+					dx: -1 * tileSizeX,
+					dy: 0
+				}
+				arr.push(topLine)
+			}
+			if(ourCorners[1]){
+				var rightLine = {
+					px: ourCorners[1][0], //SEcorner x
+					py: ourCorners[1][1], //SEcorner y
+					dx: 0,
+					dy: -1 * tileSizeX
+				}
+				arr.push(rightLine)
+			}
+			if(ourCorners[2]){
+				var bottomLine = {
+					px: ourCorners[2][0], //SWcorner x
+					py: ourCorners[2][1], //SWcorner y
+					dx: tileSizeX,
+					dy: 0
+				}
+				arr.push(bottomLine)
+			}
+			if(ourCorners[3]){
+				var leftLine = {
+					px: ourCorners[3][0], //NWcorner x
+					py: ourCorners[3][1], //NWcorner y
+					dx: 0,
+					dy: tileSizeX    //vertical y direction
+				}
+				arr.push(leftLine)
+			}
+
+			return arr // px and py lines up with [NEcorner, SEcorner, SWcorner, NWcorner]
+
+		}
+
+		function fourCorners (gridX, gridY) {
+			var toPixelx = gridX * tileSizeX
+			var toPixely = gridY * tileSizeX
+
+
+			var NEcorner = [toPixelx + tileSizeX, toPixely]
+			var SEcorner = [toPixelx + tileSizeX, toPixely + tileSizeX]
+			var SWcorner = [toPixelx, toPixely + tileSizeX]
+			var NWcorner = [toPixelx, toPixely]
+
+			var pixelcord = [NEcorner, SEcorner, SWcorner, NWcorner]
+
+			return pixelcord;
+		}
+
+		function intersectionCoords(mouseRay, lineSegment, lineOffset = 0) { // lineOffset can be -0.01, 0, and 0.01
+			//https://ncase.me/sight-and-light/
+			var r_px = mouseRay.px
+			var r_py = mouseRay.py
+			var r_dx = mouseRay.dx + lineOffset // direction
+			var r_dy = mouseRay.dy + lineOffset
+
+			var s_px = lineSegment.px
+			var s_py = lineSegment.py
+			var s_dx = lineSegment.dx+ lineOffset
+			var s_dy = lineSegment.dy+ lineOffset
+
+			// stolen
+			var T2 = (r_dx*(s_py-r_py) + r_dy*(r_px-s_px))/(s_dx*r_dy - s_dy*r_dx)
+			var T1 = (s_px+s_dx*T2-r_px)/r_dx
+
+			// also stolen but renamed instead of Ray X, Ray Y
+			var rayIntersectX = r_px + r_dx * T1
+			var rayIntersectY = r_py + r_dy * T1
+
+			var segIntersectX = s_px + s_dx * T2
+			var segIntersectY = s_py + s_dy * T2
+
+			var firstCheck = T1 > 0 && T2 >= 0 && T2 <= 1;
+
+			//console.log(T1, T2, rayIntersectX, rayIntersectY, segIntersectX, segIntersectY)
+
+			if(firstCheck){
+				//(It will be the one with the lowest T1 value)
+				//if(T1 < T2)
+					return [T1, rayIntersectX, rayIntersectY]
+				//else
+				//	return [T1, segIntersectX, segIntersectY]
+			}
+
+			return undefined;
+		}
+
+        </script>
+		<style>
+			html, body {
+			  width:  100%;
+			  height: 100%;
+			  margin: 0;
+			}
+		</style>
+    </head>
+    <body>
+		<canvas id="lightcanvas"  style="border:1px solid lightgrey; position: absolute">
+		  get better browser
+		</canvas>
+		<canvas id="mazecanvas" style="border:1px solid lightgrey;">
+		  get better browser
+		</canvas>
+ 
+    </body>
+</html>`

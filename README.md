@@ -6,4 +6,4 @@ Js project gif: [link](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExY2xiMm05
 
 Kast Auto Message delete with Tampermonkey Js:
 
-![](https://github.com/tikkuni/TK-code-examples/blob/main/imagesrc/delete_message.gif)
+![](https://github.com/tikkuni/TK-code-examples/blob/main/imagesrc/delete_messages.gif)

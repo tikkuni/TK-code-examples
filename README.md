@@ -13,5 +13,5 @@ Js mouse maze:
 ![](https://github.com/tikkuni/TK-code-examples/blob/main/imagesrc/mousemaze.gif)
 
 R project Corporation Emissions Review
-
-![](https://github.com/tikkuni/TK-code-examples/blob/main/imagesrc/r_project_rreg.png =300x)
+<img src="https://github.com/tikkuni/TK-code-examples/blob/main/imagesrc/r_project_rreg.png" width="200">
+![](imagesrc/r_project_rreg.png)

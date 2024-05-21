@@ -1,0 +1,54 @@
+:root {
+    --bg-color: rgb(55, 54, 64);
+    --aux-color: rgb(99, 104, 110);
+    --txt-color: rgb(182, 247, 193);
+    --plot-bg-color: rgb(126, 151, 166);
+    --alt-txt-color: rgb(235, 221, 191);
+    --alert-tone: rgb(204, 51, 0);
+    --button-color: rgb(46, 64, 87);
+    --stroke-color: rgb(93, 114, 134);
+
+
+}
+
+body {
+    background-color:  var(--bg-color);
+    color: var(--alt-txt-color);
+}
+
+.center_plot {
+    margin: auto;
+    text-align: center;
+}
+
+.section {
+    text-align: center;
+}
+
+div.tooltip {
+    color: var(--txt-color);
+    text-align: center;
+    pointer-events: none;
+    position: absolute;
+    width: 60px;
+    height: auto;
+    padding: 0px;
+    background-color: var(--button-color);
+    -webkit-border-radius: 10px;
+    -moz-border-radius: 10px;
+    border-radius: 10px;
+    -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.axis text {
+    fill:var(--alt-txt-color);
+    font-size: 10px;
+}
+.slider {
+    fill: yellow;
+}
+.slider text{
+    font-size: 20px;
+}

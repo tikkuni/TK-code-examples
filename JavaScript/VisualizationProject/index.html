@@ -1,0 +1,100 @@
+
+
+<html>  
+<head>  
+<script type="text/javascript" src="app.js"></script>  
+<link rel="stylesheet" href="styles.css">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<!-- Slider Package -->
+<script src="https://unpkg.com/d3-simple-slider"></script>
+
+</head>
+<body onload=finalproject()> 
+
+
+<div>
+
+<h2 class="section">TK's Final Project</h2>
+
+<br>
+<br>
+
+</div>
+<div>
+
+    <h4 class="section">
+        To get Started use the Middle "Generation Slider", you will jump between 30 differentrandom generations of Species.<br>
+        Each time you refresh the page new data will get generated. <br>
+        Most visualizations won't work until you use the Generation Slider atleast once, so please use it. Talk about a great feauture.<br>
+        Head to the Explanations in the bottom for closer understanding of what each visual is conveying. <br>
+    </h4>
+    
+    <br>
+    <br>
+    
+    </div>
+</div>
+
+<br>
+<div>
+<h3>Pool Related</h3>
+
+<div id="q1">
+
+    </div>
+    <div id="q1_plot" class="center_plot">
+    </div><br>
+</div>    
+
+    
+<div>
+<h3>Indidual Related</h3>
+<div id="q2" class="center_plot"></div>
+
+    </div>
+    <div id="q2_plot" class="center_plot">
+    </div>
+</div>
+<div class="section">
+    <h3>Explanations:</h3>
+    <div class="center_plot"></div>
+        <h3>Order is goes from left to right, and top to bottom.</h3>
+        <h5 >
+            1) Barplot, my barplot visualizes the current generations total species count, individual has 16 different posibilities of species. There are some species related elements that can make some species dominant over generations. <br>
+               The visual also uses animation to depict when a bar is removed, or in the generations case, extiction for species. Sometimes since species can interbreed (easier to compute option) the species is saved over a generation.<br>
+            Choice of colorscheme) Least distracting colors so the animations don't amplify the attention of the viewer. When hoovering over a bar, it is highlighted in both the Streamgraph and itself to show it's past. <br>
+            Marks and Channels) 
+
+        </h5>
+        <br>
+        <br>
+        <h5>
+            2) Streamgraph, This is our history of the species over generations. This is to show trends overtime and show a species dominance over the whole gene pool <br>
+            Choice of colorscheme) I choce the colorscheme Viridis for this graph since I had to show 16 different areas with different colors. This allows even colorblind people to see the plot <br>
+            Marks and Channels) 
+        </h5>
+        <br>
+        <br>
+        <h5>
+            3) Choropleth, Shows the density of each preference habitat, top item is "Grassland", left is "Jungle", right is "Forest", bottom is "Wetlands"
+            Choice of colorscheme) Red color interpolator
+        </h5>
+        <br>
+        <br>
+        <h5>
+            4) Scatter plot, This shows trends between two major attributes (size and strength) of the unique individuals in the simulation. When the graph is first ran it seems like an ordinary scatter plot <br>
+            but once the Generation Slider is used the circles take form of a Bubblegraph in each combination. Since there was only variety of having 0-7 for both size and strength we would experience alot of overlap so the bubble graph helps us <br>
+            see how many there are in each coordinate. The Toggle Species button is also connected to this plot. Initially the legend for it will be hidden, but once the generation slide is used and the button pressed it will show.
+            Choice of colorscheme) Yellow dots until the button is pressed to show the same Viridis colorscheme from above.
+        </h5>
+        <br>
+        <h5>
+            5 Adjacency Matrix, Using jaccards similarity we get each individual gene and compare it to the others per gene. Over time we get 
+            Choice of colorscheme) Blue interpolator
+        </h5>
+        </h5>
+
+    </div>
+
+</body>  
+</html>  

@@ -14,4 +14,4 @@ Js mouse maze:
 
 R project Corporation Emissions Review
 
-<img src="https://github.com/tikkuni/TK-code-examples/blob/main/imagesrc/r_project_rreg.png" width="400">
+<img src="https://github.com/tikkuni/TK-code-examples/blob/main/imagesrc/r_project_rreg.png" width="550">
